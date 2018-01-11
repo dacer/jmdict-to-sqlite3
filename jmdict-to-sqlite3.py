@@ -105,7 +105,7 @@ def jmdict_to_sqlite3(input, output, lang=''):
                     if lang == '':
                         if gloss != '':
                             gloss += ', '
-                        gloss += sense.text
+                        if sense.text is not None: gloss += sense.text
                     elif lang in sense.attrib.values():
                         if gloss != '':
                             gloss += ', '
