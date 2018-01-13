@@ -63,7 +63,9 @@ def jmdict_to_sqlite3(input, output, lang=''):
     cursor=connection.cursor()
 
     cursor.execute('CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)')
-    cursor.execute('CREATE TABLE entry (id INT PRIMARY KEY, kanji TEXT, reading TEXT, gloss TEXT, position TEXT)')
+    cursor.execute('CREATE TABLE entry (id INT PRIMARY KEY, gloss TEXT, position TEXT)')
+    cursor.execute('CREATE TABLE kanji (id INTEGER PRIMARY KEY AUTOINCREMENT, kanji TEXT, id_in_entry INT)')
+    cursor.execute('CREATE TABLE reading (id INTEGER PRIMARY KEY AUTOINCREMENT, reading TEXT, id_in_entry INT)')
 
     connection.commit()
 
@@ -85,21 +87,25 @@ def jmdict_to_sqlite3(input, output, lang=''):
         gloss = ''
         gloss_en = ''
         position = ''
+        kanjiList = []
+        readingList = []
 
         for value in element.iter():
             if value.tag == 'ent_seq':
                 id = value.text
             elif value.tag == 'k_ele':
                 for k_ele in value.findall('keb'):
-                    if kanji != '':
-                        kanji += ', '
-                    kanji += k_ele.text
+                    # if kanji != '':
+                    #     kanji += ', '
+                    # kanji += k_ele.text
+                    kanjiList.append(k_ele.text)
             elif value.tag == 'r_ele':
                 for r_ele in value.findall('reb'):
                     if r_ele.find('re_restr') is None:
-                        if reading != '':
-                            reading += ', '
-                        reading += r_ele.text
+                        # if reading != '':
+                        #     reading += ', '
+                        # reading += r_ele.text
+                        readingList.append(r_ele.text)
             elif value.tag == 'sense':
                 for sense in value.findall('gloss'):
                     if lang == '':
@@ -121,7 +127,12 @@ def jmdict_to_sqlite3(input, output, lang=''):
 
         if id != 0 and position != '':
             converted += 1
-            cursor.execute('INSERT INTO entry VALUES (?, ?, ?, ?, ?)', (id, kanji, reading, gloss if gloss != '' else gloss_en, position))
+            cursor.execute('INSERT INTO entry VALUES (?, ?, ?)', (id, gloss if gloss != '' else gloss_en, position))
+            for k in kanjiList:
+                cursor.execute('INSERT INTO kanji VALUES (?, ?, ?)', (None, k, id))
+            for r in readingList:
+                cursor.execute('INSERT INTO reading VALUES (?, ?, ?)', (None, r, id))
+            
         else:
             not_converted += 1
 
